@@ -1,0 +1,24 @@
+--cpu Cortex-M0
+"tap_machine\startup_stm32f030x6.o"
+"tap_machine\stanok_math.o"
+"tap_machine\drive.o"
+"tap_machine\encoder.o"
+"tap_machine\main.o"
+"tap_machine\gpio.o"
+"tap_machine\iwdg.o"
+"tap_machine\tim.o"
+"tap_machine\usart.o"
+"tap_machine\stm32f0xx_it.o"
+"tap_machine\stm32f0xx_ll_gpio.o"
+"tap_machine\stm32f0xx_ll_rcc.o"
+"tap_machine\stm32f0xx_ll_utils.o"
+"tap_machine\stm32f0xx_ll_exti.o"
+"tap_machine\stm32f0xx_ll_pwr.o"
+"tap_machine\stm32f0xx_ll_tim.o"
+"tap_machine\stm32f0xx_ll_dma.o"
+"tap_machine\stm32f0xx_ll_usart.o"
+"tap_machine\system_stm32f0xx.o"
+--strict --scatter "tap_machine\tap_machine.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "tap_machine.map" -o tap_machine\tap_machine.axf
