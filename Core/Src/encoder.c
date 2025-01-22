@@ -44,11 +44,6 @@ int32_t read_enc_data (encoder_data_t * HandleEncData, turn_data_t * HandleTurnD
 					if (HandleTurnData->TurnInMinute > 200)
 					{	HandleTurnData->TurnInMinute = 200;	}
 				}
-				/*	#ifdef __USE_DBG
-						sprintf (DBG_buffer, "T%u\r\n", HandleTurnData->TurnInMinute);
-						DBG_PutString(DBG_buffer);
-					#endif*/
-
 			}
 		}
 	}	

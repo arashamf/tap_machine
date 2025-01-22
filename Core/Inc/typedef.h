@@ -59,12 +59,16 @@ typedef enum
 #define 	TIMER_CLOCK								(CPU_CLOCK/TIMER_CLOCK_PRESCALER)
 #define 	TICKS_PER_SECOND					(1000UL) 
 
-#define 	KEY_BOUNCE_TIME 					(1000UL) 		// время дребезга в мс
+#define 	KEY_BOUNCE_DELAY 					(10UL) 		// время дребезга в мс
+#define 	AUTOREPEAT_DELAY 					(5UL) 		
+#define 	MAX_COUNT_RELIABILITY 		(20UL)
+#define 	DEFAULT_COUNT_RELIABILITY (10UL)
+#define 	MIN_COUNT_RELIABILITY 		(0UL)
 
-#define 	START_TURN_SETUP 					(6UL) 			//начальное количество оборотов в минуту
-#define   REDUCER 									(80UL)			//делитель редуктора
-#define 	STEPS_IN_REV							(3200UL) 		//количество микрошагов в одном полном обороте (360 гр) с учётом делителя драйвера
-#define 	CIRCLE_IN_STEP						(200UL)			//количество шагов (1,8гр) в одном полном обороте (360 гр)
+#define 	START_TURN_SETUP 					(120UL) 	//начальное количество оборотов в минуту
+#define   REDUCER 									(80UL)		//делитель редуктора
+#define 	STEPS_IN_REV							(3200UL) 	//количество микрошагов в одном полном обороте (360 гр) с учётом делителя драйвера
+#define 	CIRCLE_IN_STEP						(200UL)		//количество шагов (1,8гр) в одном полном обороте (360 гр)
 #define 	STEP_DIV 									(STEPS_IN_REV/CIRCLE_IN_STEP)	//количество микрошагов в одном шаге двигателя (1,8гр)
 #define 	STEP_TOOL									(STEPS_IN_REV*REDUCER) 				//количество микрошагов в одном полном обороте (360 гр) с учётом делителя драйвера и редуктора 
 #define 	STEP18_IN_SEC							(3125UL) 			//количество секунд в одном шаге двигателя (1,8гр)
@@ -75,7 +79,14 @@ typedef enum
 #define 	LOWER_PERIOD_SOFT_START		(6250UL) 		//начальный период плавного пуска ШИМ
 #define 	STEP_PERIOD_SOFT_START		(10UL) 				//шаг уменьшения периода плавного пуска ШИМ
 
-// Private variables -----------------------------------------------------------//
+// Private variables ----------------------------------------------------------------------------------------//
+typedef enum 
+{
+	SENSOR_STATE_OFF 				= 0	,			//режим - статус сенсора не изменился
+	SENSOR_STATE_BOUNCE					, 		//режим -  дребезг сенсора
+	SENSOR_STATE_ON							,			//режим - статус сенсора изменился
+} SENSOR_STATE_t; 									//статус сканирования сенсора
+
 
 #ifdef __cplusplus
 }

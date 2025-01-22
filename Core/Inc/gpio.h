@@ -41,7 +41,10 @@ void MX_GPIO_Init(void);
 /* USER CODE BEGIN Prototypes */
 void Select_Drive_Direction (uint8_t );
 void Enable_Drive (uint8_t );
+void init_status_sensor (void);
+uint8_t status_sensor_machine (void);
 void Sensor_Callback(void);
+void Timer_Bounce_Callback(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

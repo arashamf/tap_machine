@@ -27,7 +27,6 @@
 /* USER CODE BEGIN Includes */
 #include "typedef.h"
 #include "drive.h"
-
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -56,6 +55,8 @@ encoder_data_t encoder_data = {0}; //структура с данными энкодера
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 void SysTick_Init(void);
+void IWDG_Init(void);
+void IWDG_Reset (void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -100,10 +101,11 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 	#ifdef __USE_IWDG
-		MX_IWDG_Init();
+		IWDG_Init();
 	#endif
 	timers_init ();
 	SysTick_Init();
+	init_status_sensor ();
 	drive_init ( &number_turns ) ;
 	
 /*	number_turns.TurnInMinute = 200;
@@ -120,11 +122,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	/*	Select_Drive_Direction (DIRECT);
-		turn_drive_soft_start (&number_turns);
-		
-		Select_Drive_Direction (REVERSE);
-		turn_drive_soft_start (&number_turns);*/
 		main_loop (&encoder_data, &number_turns);
 		
 		#ifdef __USE_IWDG
@@ -185,12 +182,32 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+//----------------------------------------------------------------------------------------------------//
 void SysTick_Init(void)
 {
   MODIFY_REG(SysTick->LOAD,SysTick_LOAD_RELOAD_Msk,	(CPU_CLOCK/1000)-1);
   CLEAR_BIT(SysTick->VAL, SysTick_VAL_CURRENT_Msk);
   SET_BIT(SysTick->CTRL, SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_TICKINT_Msk);
 }
+
+//----------------------------------------------------------------------------------------------------//
+void IWDG_Init(void)
+{
+  LL_IWDG_Enable(IWDG);
+  LL_IWDG_EnableWriteAccess(IWDG);
+  LL_IWDG_SetPrescaler(IWDG, LL_IWDG_PRESCALER_128);
+  LL_IWDG_SetReloadCounter(IWDG, 4095);
+  while (LL_IWDG_IsReady(IWDG) != 1){}
+  LL_IWDG_ReloadCounter(IWDG);
+}
+
+//----------------------------------------------------------------------------------------------------//
+void IWDG_Reset (void)
+{
+	LL_IWDG_ReloadCounter(IWDG);
+}
+
+//----------------------------------------------------------------------------------------------------//
 /* USER CODE END 4 */
 
 /**

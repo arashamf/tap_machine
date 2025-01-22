@@ -76,7 +76,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define SENSOR_Pin LL_GPIO_PIN_0
 #define SENSOR_GPIO_Port GPIOF
-#define SENSOR_EXTI_IRQn EXTI0_1_IRQn
 #define PULSE_Pin LL_GPIO_PIN_4
 #define PULSE_GPIO_Port GPIOA
 #define DIR_Pin LL_GPIO_PIN_5
@@ -100,7 +99,7 @@ void Error_Handler(void);
                                                                  0 bit  for subpriority */
 #endif
 /* USER CODE BEGIN Private defines */
-//#define __USE_IWDG
+#define __USE_IWDG
 #define __USE_DBG
 /* USER CODE END Private defines */
 

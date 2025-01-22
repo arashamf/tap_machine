@@ -27,7 +27,6 @@ void drive_init ( turn_data_t * HandleTurnData )
 {
 	HandleTurnData->TurnInMinute = START_TURN_SETUP;
 	calc_period_pulse (HandleTurnData); //расчёт периода импульса
-	Enable_Drive (ON);
 	status_flag.pwm_on = OFF;
 }
 
@@ -83,19 +82,31 @@ void turn_drive_stop (void)
 //----------------------------------------------------------------------------------------------------//
 void main_loop (encoder_data_t * HandleEncData, turn_data_t * HandleTurnData)
 {
+	uint8_t dif_status = 0;
 	uint8_t status_encoder = OFF;
-	status_encoder = setup_turn (HandleEncData, HandleTurnData); //проверка состояния энкодера
-	
+//	status_encoder = setup_turn (HandleEncData, HandleTurnData); //проверка состояния энкодера
+	dif_status = status_sensor_machine();
+	if (dif_status)
+	{
+		drive_status += dif_status;
+		#ifdef __USE_DBG
+			sprintf (DBG_buffer, "drive_status=%u\r\n", drive_status);
+			DBG_PutString(DBG_buffer);
+		#endif
+		dif_status = 0;
+	}
 	switch (drive_status)
 	{
 		case DRIVE_OFF:
 			status_flag.pwm_on = OFF;
 			drive_PWM_stop ();
+			Enable_Drive (OFF);
 			break;
 		
 		case DRIVE_DIRECT:
 			if (status_flag.pwm_on == OFF)
 			{
+				Enable_Drive (ON);
 				status_flag.curr_direct = DIRECT;
 				Select_Drive_Direction (status_flag.curr_direct);
 				turn_drive_soft_start (HandleTurnData);
@@ -111,9 +122,11 @@ void main_loop (encoder_data_t * HandleEncData, turn_data_t * HandleTurnData)
 		case DRIVE_REVERSE:
 			if (status_flag.curr_direct == DIRECT)
 			{
+				Enable_Drive (OFF);
 				turn_drive_stop ();
 				status_flag.curr_direct = REVERSE;
 				Select_Drive_Direction (status_flag.curr_direct);
+				Enable_Drive (ON);
 				turn_drive_soft_start (HandleTurnData);
 				status_flag.pwm_on = ON;
 			}
@@ -127,6 +140,7 @@ void main_loop (encoder_data_t * HandleEncData, turn_data_t * HandleTurnData)
 			break;
 		
 		default:
+			drive_status = DRIVE_OFF;
 			break;
 	}
 }

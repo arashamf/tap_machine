@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -39,7 +39,7 @@ extern "C" {
 void MX_IWDG_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-void IWDG_Reset (void);
+
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
