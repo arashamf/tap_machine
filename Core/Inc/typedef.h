@@ -49,21 +49,28 @@ typedef enum
 } DRIVE_STATUS_t;
 
 // Defines ----------------------------------------------------------------------//
-#define 	ON 																1
-#define 	OFF 															0
-#define 	DIRECT 														1
-#define 	REVERSE 													0
+#define 	ON 													1
+#define 	OFF 												0
+#define 	DIRECT 											1
+#define 	REVERSE 										0
+#define 	ENABLE 											1
+#define 	DISABLE 										0
+#define 	PERIODIC 										1
+#define 	ONCE 												0
+#define 	MAX_xTIMERS 								5
 
 #define 	CPU_CLOCK									(48000000UL)				// „астота контроллера 
 #define 	TIMER_CLOCK_PRESCALER			(CPU_CLOCK/1000000UL)
 #define 	TIMER_CLOCK								(CPU_CLOCK/TIMER_CLOCK_PRESCALER)
 #define 	TICKS_PER_SECOND					(1000UL) 
 
-#define 	KEY_BOUNCE_DELAY 					(10UL) 		// врем€ дребезга в мс
-#define 	AUTOREPEAT_DELAY 					(5UL) 		
+#define 	SENSOR_BOUNCE_DELAY 			(5UL) 		// врем€ дребезга в мс	
 #define 	MAX_COUNT_RELIABILITY 		(20UL)
 #define 	DEFAULT_COUNT_RELIABILITY (10UL)
 #define 	MIN_COUNT_RELIABILITY 		(0UL)
+#define 	BTN_BOUNCE_TIME 					(50UL) 		// врем€ дребезга в мс
+#define 	BTN_AUTOREPEAT_TIME 			(100UL)
+#define 	COUNT_REPEAT_BUTTON 			(5UL)
 
 #define 	START_TURN_SETUP 					(120UL) 	//начальное количество оборотов в минуту
 #define   REDUCER 									(80UL)		//делитель редуктора
@@ -87,6 +94,15 @@ typedef enum
 	SENSOR_STATE_ON							,			//режим - статус сенсора изменилс€
 } SENSOR_STATE_t; 									//статус сканировани€ сенсора
 
+//-----------------------------------------------------------------------------------//
+typedef enum 
+{
+	KEY_STATE_OFF 				= 0	,				//режим - кнопка не нажата
+	KEY_STATE_ON							,				//режим - кнопка нажата
+	KEY_STATE_BOUNCE					, 			//режим -  дребезг кнопки
+	KEY_STATE_AUTOREPEAT			,	 			//режим - режим ожидани€ (автоповтора) отжати€ кнопки
+	KEY_STATE_WAIT_TURNOFF
+} KEY_STATE_t; 										//статус сканировани€ кнопки
 
 #ifdef __cplusplus
 }

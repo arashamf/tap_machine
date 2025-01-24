@@ -490,6 +490,11 @@
               <FileType>1</FileType>
               <FilePath>../Core/Src/stm32f0xx_it.c</FilePath>
             </File>
+            <File>
+              <FileName>systick.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\systick.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -577,14 +582,14 @@
               <FilePath>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_tim.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f0xx_ll_dma.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_dma.c</FilePath>
-            </File>
-            <File>
               <FileName>stm32f0xx_ll_usart.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_usart.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f0xx_ll_dma.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_dma.c</FilePath>
             </File>
           </Files>
         </Group>

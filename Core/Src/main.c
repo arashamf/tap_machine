@@ -27,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 #include "typedef.h"
 #include "drive.h"
+#include "systick.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -54,7 +55,6 @@ encoder_data_t encoder_data = {0}; //структура с данными энкодера
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void SysTick_Init(void);
 void IWDG_Init(void);
 void IWDG_Reset (void);
 /* USER CODE END PFP */
@@ -96,15 +96,15 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_TIM3_Init();
   MX_TIM14_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 	#ifdef __USE_IWDG
 		IWDG_Init();
 	#endif
-	timers_init ();
-	SysTick_Init();
+	SysTick_Init(&xTimer_Task); //инициализи€ таймера SysTick указателем на ф-ю диспетчера xTimer_Task
+	xTimer_Init(&Get_SysTick); //инициализаци€ указател€ xTimer ф-ей получени€ системного времени SysTick
+	timers_init ();	
 	init_status_sensor ();
 	drive_init ( &number_turns ) ;
 	
@@ -182,13 +182,7 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-//----------------------------------------------------------------------------------------------------//
-void SysTick_Init(void)
-{
-  MODIFY_REG(SysTick->LOAD,SysTick_LOAD_RELOAD_Msk,	(CPU_CLOCK/1000)-1);
-  CLEAR_BIT(SysTick->VAL, SysTick_VAL_CURRENT_Msk);
-  SET_BIT(SysTick->CTRL, SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_TICKINT_Msk);
-}
+
 
 //----------------------------------------------------------------------------------------------------//
 void IWDG_Init(void)

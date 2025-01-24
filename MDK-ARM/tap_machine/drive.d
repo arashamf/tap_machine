@@ -25,4 +25,5 @@ tap_machine/drive.o: ..\Core\Src\drive.c ..\Core\Inc\drive.h \
   ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_ll_gpio.h \
   ..\Core\Inc\typedef.h ..\Core\Inc\gpio.h ..\Core\Inc\tim.h \
   ..\Core\Inc\typedef.h ..\Core\Inc\stanok_math.h ..\Core\Inc\encoder.h \
-  ..\Core\Inc\usart.h C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h
+  ..\Core\Inc\usart.h ..\Core\Inc\systick.h \
+  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h

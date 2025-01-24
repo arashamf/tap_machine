@@ -43,6 +43,7 @@ void Select_Drive_Direction (uint8_t );
 void Enable_Drive (uint8_t );
 void init_status_sensor (void);
 uint8_t status_sensor_machine (void);
+uint8_t scan_btn (void);
 void Sensor_Callback(void);
 void Timer_Bounce_Callback(void);
 /* USER CODE END Prototypes */

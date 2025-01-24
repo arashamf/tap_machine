@@ -23,6 +23,9 @@
 /* USER CODE BEGIN 0 */
 #include "typedef.h"
 #include "gpio.h"
+#include "systick.h"
+#include "usart.h"
+#include <stdio.h>
 
 // Prototypes ------------------------------------------------------------------//
 static void encoder_init(void);
@@ -30,71 +33,15 @@ static void tim_delay_init (void);
 static void timer_bounce_init (void);
 
 // Variables -----------------------------------------------------------------//
-uint8_t end_bounce = 0;
-volatile uint16_t delay_ms = 0;
+uint8_t end_bounce = 0; //флаг окончания ожидания дребезга
+
+static portTickType xTimeNow; //указатель на ф-ю возврата системного времени вида uint32_t Get_SysTick(void)
+static xTIMER xTimerList[MAX_xTIMERS]; //массив структур программных таймеров
+
+static void vTimerUARTmsgCallback(xTimerHandle xTimer); 
+static xTimerHandle xTimerUARTmsg;
 /* USER CODE END 0 */
 
-/* TIM3 init function */
-void MX_TIM3_Init(void)
-{
-
-  /* USER CODE BEGIN TIM3_Init 0 */
-
-  /* USER CODE END TIM3_Init 0 */
-
-  LL_TIM_InitTypeDef TIM_InitStruct = {0};
-
-  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-  /* Peripheral clock enable */
-  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
-
-  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
-  /**TIM3 GPIO Configuration
-  PA6   ------> TIM3_CH1
-  PA7   ------> TIM3_CH2
-  */
-  GPIO_InitStruct.Pin = ENC_CH1_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_DOWN;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_1;
-  LL_GPIO_Init(ENC_CH1_GPIO_Port, &GPIO_InitStruct);
-
-  GPIO_InitStruct.Pin = ENC_CH2_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_DOWN;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_1;
-  LL_GPIO_Init(ENC_CH2_GPIO_Port, &GPIO_InitStruct);
-
-  /* USER CODE BEGIN TIM3_Init 1 */
-
-  /* USER CODE END TIM3_Init 1 */
-  LL_TIM_SetEncoderMode(TIM3, LL_TIM_ENCODERMODE_X2_TI1);
-  LL_TIM_IC_SetActiveInput(TIM3, LL_TIM_CHANNEL_CH1, LL_TIM_ACTIVEINPUT_DIRECTTI);
-  LL_TIM_IC_SetPrescaler(TIM3, LL_TIM_CHANNEL_CH1, LL_TIM_ICPSC_DIV1);
-  LL_TIM_IC_SetFilter(TIM3, LL_TIM_CHANNEL_CH1, LL_TIM_IC_FILTER_FDIV1_N2);
-  LL_TIM_IC_SetPolarity(TIM3, LL_TIM_CHANNEL_CH1, LL_TIM_IC_POLARITY_RISING);
-  LL_TIM_IC_SetActiveInput(TIM3, LL_TIM_CHANNEL_CH2, LL_TIM_ACTIVEINPUT_DIRECTTI);
-  LL_TIM_IC_SetPrescaler(TIM3, LL_TIM_CHANNEL_CH2, LL_TIM_ICPSC_DIV1);
-  LL_TIM_IC_SetFilter(TIM3, LL_TIM_CHANNEL_CH2, LL_TIM_IC_FILTER_FDIV1_N4);
-  LL_TIM_IC_SetPolarity(TIM3, LL_TIM_CHANNEL_CH2, LL_TIM_IC_POLARITY_RISING);
-  TIM_InitStruct.Prescaler = 0;
-  TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-  TIM_InitStruct.Autoreload = 65535;
-  TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
-  LL_TIM_Init(TIM3, &TIM_InitStruct);
-  LL_TIM_DisableARRPreload(TIM3);
-  LL_TIM_SetTriggerOutput(TIM3, LL_TIM_TRGO_RESET);
-  LL_TIM_DisableMasterSlaveMode(TIM3);
-  /* USER CODE BEGIN TIM3_Init 2 */
-
-  /* USER CODE END TIM3_Init 2 */
-
-}
 /* TIM14 init function */
 void MX_TIM14_Init(void)
 {
@@ -226,7 +173,7 @@ static void timer_bounce_init (void)
 	
 	LL_TIM_ClearFlag_UPDATE(TIM_BOUNCE); //сброс флага обновления таймера
 	LL_TIM_EnableIT_UPDATE(TIM_BOUNCE);
-	NVIC_SetPriority(TIM_BOUNCE_IRQn, 2);
+	NVIC_SetPriority(TIM_BOUNCE_IRQn, 1);
   NVIC_EnableIRQ(TIM_BOUNCE_IRQn);
 }
 
@@ -249,20 +196,99 @@ void TIM_BOUNCE_IRQHandler(void)
 	}
 }
 
-//-----------------------------функция задержки, использующая таймер SysTickа-----------------------------//
-void Delay_Ms (uint16_t bounce_delay)
+//----------------------------------------------------------------------------------------------------------//
+void xTimer_Init	(uint32_t (*GetSysTick)(void))
 {
-	delay_ms = bounce_delay ;
-	while (delay_ms > 0) {}
+	xTimeNow = GetSysTick; //инициализация указателя на ф-ю получения системного времени
 }
 
-//----------------------------------------коллбэк таймера SysTickа--------=--------------------------------//
-void TIM_DelayMs_Callback (void)
+//-----------------------------------------------------------------------------------------------------------//
+xTimerHandle xTimer_Create(uint32_t xTimerPeriodInTicks, FunctionalState AutoReload, 
+tmrTIMER_CALLBACK CallbackFunction, FunctionalState NewState)
 {
-	if(delay_ms > 0)  
-	{	
-		delay_ms--;	
+	xTimerHandle NewTimer = NULL; //инициализация указателя на структуру для программного таймера
+	uint16_t count;
+	
+	for (count = 0; count < MAX_xTIMERS; count++) //поиск свободного элемента массива структур с таймерами
+	{
+		if (xTimerList[count].CallbackFunction == NULL) 		//если указатель на ф-ю коллбэка пуст
+		{
+			xTimerList[count].periodic = xTimerPeriodInTicks;		//время задержки в мс
+			xTimerList[count].AutoReload = AutoReload;				//периодический запуск или одиночный
+			xTimerList[count].CallbackFunction = CallbackFunction;	//указатель на ф-ю коллбэка
+			
+			if (NewState != DISABLE) //если новый таймер в состояние  ENABLE
+			{
+				xTimerList[count].expiry = xTimeNow() + xTimerPeriodInTicks; //вычисление времени следующего вызова коллбэка
+				xTimerList[count].State = __ACTIVE; //состояние таймера активен
+			} 
+			else 
+			{	xTimerList[count].State = __IDLE;	}	//если новый таймер в состояние  DISABLE	
+			NewTimer = (xTimerHandle)(count+1); //возврат номера указателя на структуру таймера
+			break;
+    }
+  }
+	return NewTimer;
+}
+
+//-------------------------------------------------------------------------------------------------------------//
+void xTimer_SetPeriod(xTimerHandle xTimer, uint32_t xTimerPeriodInTicks) 
+{
+	if ( xTimer != NULL )  
+	{	xTimerList[(uint32_t)xTimer-1].periodic = xTimerPeriodInTicks;	}
+}
+
+//-------------------------------------------------------------------------------------------------------------//
+void xTimer_Reload(xTimerHandle xTimer) 
+{
+	if ( xTimer != NULL ) 
+	{
+		xTimerList[(uint32_t)xTimer-1].expiry = xTimeNow() + xTimerList[(uint32_t)xTimer-1].periodic;
+		xTimerList[(uint32_t)xTimer-1].State = __ACTIVE;
 	}
+}
+
+//-------------------------------------------------------------------------------------------------------------//
+void xTimer_Delete(xTimerHandle xTimer)
+{
+	if ( xTimer != NULL ) 
+	{
+		xTimerList[(uint32_t)xTimer-1].CallbackFunction = NULL;
+		xTimerList[(uint32_t)xTimer-1].State = __IDLE;
+		xTimer = NULL;
+	}		
+}
+
+//------------------------------------------ф-я диспетчера xTimer------------------------------------------//
+void xTimer_Task(uint32_t portTick)
+{
+	uint16_t i;
+	
+	for (i = 0; i < MAX_xTIMERS; i++) {
+		switch (xTimerList[i].State) 
+		{
+			case __ACTIVE: //если таймер активен
+				if ( portTick >= xTimerList[i].expiry ) //если текущее системное время больше или равно установленному
+				{				
+					if ( xTimerList[i].AutoReload != DISABLE ) //если таймер периодический
+					{	xTimerList[i].expiry = portTick + xTimerList[i].periodic;	} //установка нового времени срабатывания таймера
+					else 
+					{	xTimerList[i].State = __IDLE;	}	//статус таймера не активен		
+					xTimerList[i].CallbackFunction((xTimerHandle)(i+1)); //вызов коллбэка
+				}					
+				break;
+				
+			default:
+				break;
+		}
+	}	
+}
+
+//---------------------------------------------------------------------------------------------------------//
+static void vTimerUARTmsgCallback(xTimerHandle xTimer)
+{
+	sprintf (DBG_buffer, "vTimerUARTmsgCallback\r\n");
+	DBG_PutString(DBG_buffer);
 }
 
 //---------------------------------------------------------------------------------------------------------//
@@ -270,6 +296,10 @@ void timers_init (void)
 {
 	encoder_init(); 			//инициализация таймера энкодера
 	tim_delay_init(); 		//инициализация TIM16 для микросекундных задержек
-	timer_bounce_init();	//инициализация TIM17	для отчёта задержек дребезга кнопок 							
+	timer_bounce_init();	//инициализация TIM17	для отчёта задержек дребезга кнопок 	
+
+	xTimerUARTmsg = xTimer_Create(5000, PERIODIC, &vTimerUARTmsgCallback, ENABLE); //перезагрузка и инициализация GPS-модуля через 5с 	
 }
+
+//---------------------------------------------------------------------------------------------------------//
 /* USER CODE END 1 */

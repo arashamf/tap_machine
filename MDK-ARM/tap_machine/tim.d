@@ -22,4 +22,5 @@ tap_machine/tim.o: ..\Core\Src\tim.c ..\Core\Inc\tim.h ..\Core\Inc\main.h \
   ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_ll_tim.h \
   ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_ll_usart.h \
   ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_ll_gpio.h \
-  ..\Core\Inc\typedef.h ..\Core\Inc\gpio.h
+  ..\Core\Inc\typedef.h ..\Core\Inc\gpio.h ..\Core\Inc\systick.h \
+  ..\Core\Inc\usart.h C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h

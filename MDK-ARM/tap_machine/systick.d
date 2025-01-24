@@ -1,4 +1,5 @@
-tap_machine/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
+tap_machine/systick.o: ..\Core\Src\systick.c ..\Core\Inc\systick.h \
+  ..\Core\Inc\main.h \
   ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_ll_iwdg.h \
   ..\Drivers\CMSIS\Device\ST\STM32F0xx\Include\stm32f0xx.h \
   ..\Drivers\CMSIS\Device\ST\STM32F0xx\Include\stm32f030x6.h \
@@ -22,7 +23,4 @@ tap_machine/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
   ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_ll_tim.h \
   ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_ll_usart.h \
   ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_ll_gpio.h \
-  ..\Core\Inc\iwdg.h ..\Core\Inc\main.h ..\Core\Inc\tim.h \
-  ..\Core\Inc\usart.h ..\Core\Inc\gpio.h ..\Core\Inc\typedef.h \
-  ..\Core\Inc\drive.h ..\Core\Inc\typedef.h ..\Core\Inc\systick.h \
-  C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h
+  ..\Core\Inc\typedef.h C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h

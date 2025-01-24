@@ -80,10 +80,10 @@ void Error_Handler(void);
 #define PULSE_GPIO_Port GPIOA
 #define DIR_Pin LL_GPIO_PIN_5
 #define DIR_GPIO_Port GPIOA
-#define ENC_CH1_Pin LL_GPIO_PIN_6
-#define ENC_CH1_GPIO_Port GPIOA
-#define ENC_CH2_Pin LL_GPIO_PIN_7
-#define ENC_CH2_GPIO_Port GPIOA
+#define BTN1_Pin LL_GPIO_PIN_6
+#define BTN1_GPIO_Port GPIOA
+#define BTN2_Pin LL_GPIO_PIN_7
+#define BTN2_GPIO_Port GPIOA
 #define ENABLE_Pin LL_GPIO_PIN_1
 #define ENABLE_GPIO_Port GPIOB
 #ifndef NVIC_PRIORITYGROUP_0
@@ -99,7 +99,7 @@ void Error_Handler(void);
                                                                  0 bit  for subpriority */
 #endif
 /* USER CODE BEGIN Private defines */
-#define __USE_IWDG
+//#define __USE_IWDG
 #define __USE_DBG
 /* USER CODE END Private defines */
 

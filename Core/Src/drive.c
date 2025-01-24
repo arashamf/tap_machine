@@ -7,6 +7,7 @@
 #include "stanok_math.h"
 #include "encoder.h"
 #include "usart.h"
+#include "systick.h"
 
 #include <stdio.h>
 // Exported types ------------------------------------------------------------------------------------//
@@ -54,14 +55,14 @@ void turn_drive_soft_start (turn_data_t * HandleTurnData)
 {
 	volatile uint32_t period_PWM = LOWER_PERIOD_SOFT_START;
 	drive_PWM_start(period_PWM); //подача изменнёного ШИМа на двигатель
-	Delay_Ms (2);
+	delay_ms (2);
 	
 	while (period_PWM > HandleTurnData->PulsePeriod)
 	{
 
 		period_PWM = (period_PWM - STEP_PERIOD_SOFT_START);
 		drive_PWM_mod(period_PWM);
-		Delay_Ms (2);
+		delay_ms (2);
 	}
 
 	drive_PWM_mod(HandleTurnData->PulsePeriod);
@@ -95,53 +96,61 @@ void main_loop (encoder_data_t * HandleEncData, turn_data_t * HandleTurnData)
 		#endif
 		dif_status = 0;
 	}
+	
 	switch (drive_status)
 	{
-		case DRIVE_OFF:
+		case DRIVE_OFF: 			//состояние машины - выключено
 			status_flag.pwm_on = OFF;
 			drive_PWM_stop ();
 			Enable_Drive (OFF);
 			break;
 		
-		case DRIVE_DIRECT:
-			if (status_flag.pwm_on == OFF)
+		case DRIVE_DIRECT:		//состояние машины - прямое вращение
+			if (status_flag.pwm_on == OFF) //если мотор выключен
 			{
-				Enable_Drive (ON);
-				status_flag.curr_direct = DIRECT;
-				Select_Drive_Direction (status_flag.curr_direct);
-				turn_drive_soft_start (HandleTurnData);
-				status_flag.pwm_on = ON;
+				Enable_Drive (ON);               //разрешение включения двигателя
+				status_flag.curr_direct = DIRECT; //установка флага направления вращения двигателя
+				Select_Drive_Direction (status_flag.curr_direct); //выбор направления вращения
+				turn_drive_soft_start (HandleTurnData); //плавный пуск двигателя
+				status_flag.pwm_on = ON; //установка флага состояния двигателя - включено
 			}
-			else
+			/*else
 			{
-				if (status_encoder == ON)
+				if (status_encoder == ON)				//проверка энкодера
 				{	turn_drive_mod (HandleTurnData);	}
-			}
+			}*/
 			break;
 		
-		case DRIVE_REVERSE:
+		case DRIVE_REVERSE:			//состояние машины - обратное вращение
 			if (status_flag.curr_direct == DIRECT)
 			{
-				Enable_Drive (OFF);
-				turn_drive_stop ();
-				status_flag.curr_direct = REVERSE;
-				Select_Drive_Direction (status_flag.curr_direct);
-				Enable_Drive (ON);
-				turn_drive_soft_start (HandleTurnData);
-				status_flag.pwm_on = ON;
+				Enable_Drive (OFF);		 //запрещение включения двигателя
+				turn_drive_stop (); 		//остановка ШИМа
+				status_flag.curr_direct = REVERSE; //установка флага направления вращения двигателя
+				Select_Drive_Direction (status_flag.curr_direct); //выбор направления вращения
+				Enable_Drive (ON); 				//разрешение включения двигателя
+				turn_drive_soft_start (HandleTurnData);	//плавный пуск двигателя
+				status_flag.pwm_on = ON;	//установка флага состояния двигателя - включено
 			}
-			if (status_encoder == ON)
-			{	turn_drive_mod (HandleTurnData);	}
+		/*	if (status_encoder == ON)				 //проверка энкодера
+			{	turn_drive_mod (HandleTurnData);	}*/
 			break;
 			
-		case DRIVE_REVERSE_CONTINUE:
-			if (status_encoder == ON)
-			{	turn_drive_mod (HandleTurnData);	}
+		case DRIVE_REVERSE_CONTINUE:		//состояние машины - продолжение обратного вращения
+		/*	if (status_encoder == ON)					//проверка энкодера
+			{	turn_drive_mod (HandleTurnData);	}*/
 			break;
 		
 		default:
 			drive_status = DRIVE_OFF;
 			break;
+	}
+	
+	if (scan_btn() == ON) //проверка состояния кнопки стоп
+	{
+		drive_status = DRIVE_OFF;
+		Enable_Drive (OFF);		 //запрещение включения двигателя
+		turn_drive_stop (); 		//остановка ШИМа
 	}
 }
 

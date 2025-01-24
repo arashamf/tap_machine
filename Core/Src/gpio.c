@@ -35,7 +35,7 @@
 /*----------------------------------------------------------------------------*/
 /* USER CODE BEGIN 1 */
 // Private variables -------------------------------------------------------------------------------//
-uint8_t flag_end_bounce = ON;
+uint8_t flag_end_bounce = OFF;
 volatile uint8_t status_sensor = OFF;
 volatile uint8_t machine_state = SENSOR_STATE_OFF; 
 
@@ -81,6 +81,18 @@ void MX_GPIO_Init(void)
   LL_GPIO_Init(DIR_GPIO_Port, &GPIO_InitStruct);
 
   /**/
+  GPIO_InitStruct.Pin = BTN1_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_DOWN;
+  LL_GPIO_Init(BTN1_GPIO_Port, &GPIO_InitStruct);
+
+  /**/
+  GPIO_InitStruct.Pin = BTN2_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_DOWN;
+  LL_GPIO_Init(BTN2_GPIO_Port, &GPIO_InitStruct);
+
+  /**/
   GPIO_InitStruct.Pin = ENABLE_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
@@ -121,6 +133,25 @@ static uint8_t Read_Status_Sensor (void)
 	return (LL_GPIO_IsInputPinSet(SENSOR_GPIO_Port, SENSOR_Pin));
 }
 
+//------------------------------------------------------------------------------------------//
+static uint8_t Read_Status_BTN1 (void)
+{
+	uint8_t status_BTN = OFF;
+	if (LL_GPIO_IsInputPinSet(BTN1_GPIO_Port, BTN1_Pin) == OFF) //инверсная логика - если кнопка нажата, функция LL_GPIO_IsInputPinSet возвращает 0
+	{	status_BTN = ON; }
+	return status_BTN;
+}
+
+//------------------------------------------------------------------------------------------//
+static uint8_t Read_Status_BTN2 (void)
+{
+	uint8_t status_BTN = OFF;
+	if (LL_GPIO_IsInputPinSet(BTN2_GPIO_Port, BTN2_Pin) == OFF) //инверсная логика - если кнопка нажата, функция LL_GPIO_IsInputPinSet возвращает 0
+	{	status_BTN = ON; }
+	return status_BTN;
+}
+
+
 //--------------------------------------------------------------------------------------------------//
 void init_status_sensor (void)
 {
@@ -145,15 +176,16 @@ uint8_t status_sensor_machine (void)
 		if ((status_sensor = Read_Status_Sensor()) == ON)
 		{	
 			machine_state = SENSOR_STATE_BOUNCE;	
-			repeat_time (KEY_BOUNCE_DELAY);
+			repeat_time (SENSOR_BOUNCE_DELAY);
 		}
-		return 0;
+		return OFF;
 	}
 	
 	if (machine_state == SENSOR_STATE_BOUNCE)	//стадия - дребезг сенсора
 	{
 		if (flag_end_bounce == ON)
 		{
+			flag_end_bounce = OFF;
 			if((status_sensor = Read_Status_Sensor()) == ON)	
 			{	reliability_count++;	}	
 			else 
@@ -163,7 +195,8 @@ uint8_t status_sensor_machine (void)
 			}
 			if ((reliability_count < MAX_COUNT_RELIABILITY) && (reliability_count > MIN_COUNT_RELIABILITY))
 			{	
-				repeat_time (AUTOREPEAT_DELAY);	
+				repeat_time (SENSOR_BOUNCE_DELAY);	
+				return OFF;
 			}
 			else
 			{
@@ -179,7 +212,7 @@ uint8_t status_sensor_machine (void)
 					}
 				}
 				reliability_count = DEFAULT_COUNT_RELIABILITY;
-				return 1;
+				return ON;
 			}
 		}
 	}
@@ -188,20 +221,94 @@ uint8_t status_sensor_machine (void)
 		if ((status_sensor = Read_Status_Sensor()) == OFF)
 		{	
 			machine_state = SENSOR_STATE_BOUNCE;	
-			repeat_time (KEY_BOUNCE_DELAY);
+			repeat_time (SENSOR_BOUNCE_DELAY);
 		}
 	}	
-	return 0;
+	return OFF;
 }
+
+//--------------------------------------------------------------------------------------------------//
+uint8_t scan_btn (void)
+{
+	static __IO uint8_t key_state = KEY_STATE_OFF; // начальное состояние кнопки - не нажата
+	static __IO uint8_t count_autorepeat = 0;
+	
+	if(key_state == KEY_STATE_OFF) //если кнопка была отпущена - ожидание нажатия
+	{
+		if(Read_Status_BTN2() == ON)	//если кнопка нажата
+		{
+			key_state =  KEY_STATE_ON; //переход на следующую стадию - режим проверки нажатия кнопки
+		}
+	}
+	
+	if (key_state ==  KEY_STATE_ON)  //режим проверки нажатия кнопки
+	{
+		repeat_time (BTN_BOUNCE_TIME); //запуск таймера ожидания окончания дребезга
+		key_state = KEY_STATE_BOUNCE; // переход в режим окончания дребезга
+	}
+	
+	if(key_state == KEY_STATE_BOUNCE) //режим окончания дребезга
+	{
+		if (end_bounce == SET) //если флаг окончания дребезга установлен
+		{
+			if(Read_Status_BTN2() == OFF)	 // если кнопка отпущена (нажатие менее 50 мс это дребезг)
+			{
+				key_state = KEY_STATE_OFF; //переход в начальное состояние ожидания нажатия кнопки
+				return OFF; //возврат 0 
+			}	
+			else //если кнопка продолжает удерживаться
+			{	
+				repeat_time (BTN_AUTOREPEAT_TIME); //установка таймера ожидания отключения кнопки
+				key_state = KEY_STATE_AUTOREPEAT;   //переход в режим автоповтора 
+				count_autorepeat = 0;
+			}
+		}
+	}
+	if (key_state == KEY_STATE_AUTOREPEAT) //режим автоповтора
+	{
+		if (end_bounce == SET) //если флаг окончания задержки (устанавливается в прерывании таймера)
+		{
+			if(Read_Status_BTN2() == OFF)	 // если кнопка была отпущена 
+			{
+				key_state = KEY_STATE_OFF; //переход в начальное состояние ожидания нажатия кнопки
+				return ON; //возврата состояния кнопки
+			}
+			else //если кнопка продолжает удерживаться - ожидание отпускания кнопки
+			{	
+				repeat_time (BTN_AUTOREPEAT_TIME); //установка таймера ожидания отключения кнопки				
+				if (count_autorepeat < COUNT_REPEAT_BUTTON) //ожидание 500 мс
+				{	count_autorepeat++;	}
+				else //если кнопка удерживалась более 650 мс
+				{	
+					key_state = KEY_STATE_WAIT_TURNOFF; //стадия ожидания отпускания кнопки
+					return ON; //возврата состояния кнопки
+				}
+			} 	
+		}					
+	}
+	
+	if (key_state == KEY_STATE_WAIT_TURNOFF) //ожидание ожидания отпускания кнопки
+	{	
+		if (end_bounce == SET) //если флаг окончания дребезга установлен (устанавливается в прерывании таймера)
+		{
+			if(Read_Status_BTN2() == OFF)	 // если кнопка была отпущена (короткое нажатие кнопки < 150 мс)
+			{				
+				key_state = KEY_STATE_OFF; //переход в начальное состояние ожидания нажатия кнопки
+			}
+			else
+			{
+				repeat_time (BTN_AUTOREPEAT_TIME); //установка таймера ожидания отключения кнопки
+			}
+		}
+	}
+	return OFF;
+}
+
 
 //----------------------------------------------------------------------------------------------------//
 void Sensor_Callback(void)
 {
 	status_sensor = Read_Status_Sensor();
-	#ifdef __USE_DBG
-		sprintf (DBG_buffer, "irq=%u,end_bounce=%u\r\n", drive_status, 	flag_end_bounce);
-		DBG_PutString(DBG_buffer);
-	#endif
 }
 
 //----------------------------------------------------------------------------------------------------//
@@ -209,6 +316,7 @@ void Timer_Bounce_Callback(void)
 {
 	flag_end_bounce = ON;
 	LL_TIM_DisableCounter(TIM_BOUNCE); //выключение таймера	
+	
 	#ifdef __USE_DBG
 		sprintf (DBG_buffer, "end_bounce=%u\r\n", flag_end_bounce);
 		DBG_PutString(DBG_buffer);
