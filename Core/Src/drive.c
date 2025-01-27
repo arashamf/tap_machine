@@ -55,14 +55,14 @@ void turn_drive_soft_start (turn_data_t * HandleTurnData)
 {
 	volatile uint32_t period_PWM = LOWER_PERIOD_SOFT_START;
 	drive_PWM_start(period_PWM); //подача изменнёного ШИМа на двигатель
-	delay_ms (2);
+	delay_us(2000);
 	
 	while (period_PWM > HandleTurnData->PulsePeriod)
 	{
 
 		period_PWM = (period_PWM - STEP_PERIOD_SOFT_START);
 		drive_PWM_mod(period_PWM);
-		delay_ms (2);
+		delay_us(2000);
 	}
 
 	drive_PWM_mod(HandleTurnData->PulsePeriod);
@@ -90,11 +90,12 @@ void main_loop (encoder_data_t * HandleEncData, turn_data_t * HandleTurnData)
 	if (dif_status)
 	{
 		drive_status += dif_status;
+		dif_status = 0;
+		
 		#ifdef __USE_DBG
 			sprintf (DBG_buffer, "drive_status=%u\r\n", drive_status);
 			DBG_PutString(DBG_buffer);
-		#endif
-		dif_status = 0;
+		#endif		
 	}
 	
 	switch (drive_status)

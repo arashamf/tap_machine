@@ -90,9 +90,9 @@ void xTimer_Delete(xTimerHandle xTimer);
 void xTimer_Task(uint32_t portTick);
 
 void timers_init (void);
-
+void xTimersBounceSensor_Reload (uint16_t	);
+void xTimerBounceBtn_Reload (uint16_t );
 //Variables -----------------------------------------------------------------------//
-extern uint8_t end_bounce;
 
 /* USER CODE END Prototypes */
 

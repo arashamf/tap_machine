@@ -57,14 +57,14 @@ typedef enum
 #define 	DISABLE 										0
 #define 	PERIODIC 										1
 #define 	ONCE 												0
-#define 	MAX_xTIMERS 								5
+#define 	MAX_xTIMERS 								3
 
 #define 	CPU_CLOCK									(48000000UL)				// Частота контроллера 
 #define 	TIMER_CLOCK_PRESCALER			(CPU_CLOCK/1000000UL)
 #define 	TIMER_CLOCK								(CPU_CLOCK/TIMER_CLOCK_PRESCALER)
 #define 	TICKS_PER_SECOND					(1000UL) 
 
-#define 	SENSOR_BOUNCE_DELAY 			(5UL) 		// время дребезга в мс	
+#define 	SENSOR_BOUNCE_DELAY 			(10UL) 		// время дребезга в мс	
 #define 	MAX_COUNT_RELIABILITY 		(20UL)
 #define 	DEFAULT_COUNT_RELIABILITY (10UL)
 #define 	MIN_COUNT_RELIABILITY 		(0UL)

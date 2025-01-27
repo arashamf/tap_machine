@@ -33,13 +33,15 @@ static void tim_delay_init (void);
 static void timer_bounce_init (void);
 
 // Variables -----------------------------------------------------------------//
-uint8_t end_bounce = 0; //флаг окончания ожидания дребезга
-
 static portTickType xTimeNow; //указатель на ф-ю возврата системного времени вида uint32_t Get_SysTick(void)
 static xTIMER xTimerList[MAX_xTIMERS]; //массив структур программных таймеров
 
-static void vTimerUARTmsgCallback(xTimerHandle xTimer); 
-static xTimerHandle xTimerUARTmsg;
+/*static void vTimerUARTmsgCallback(xTimerHandle xTimer); 
+static xTimerHandle xTimerUARTmsg;*/
+static void vTimerBounceSensorCallback(xTimerHandle xTimer); 
+static xTimerHandle xTimerBounceSensor;
+static void vTimerBounceBtnCallback(xTimerHandle xTimer); 
+static xTimerHandle xTimerBounceBtn;
 /* USER CODE END 0 */
 
 /* TIM14 init function */
@@ -192,7 +194,7 @@ void TIM_BOUNCE_IRQHandler(void)
 	if (LL_TIM_IsActiveFlag_UPDATE(TIM_BOUNCE) == SET)
 	{	
 		LL_TIM_ClearFlag_UPDATE (TIM_BOUNCE); //сброс флага обновления таймера
-		Timer_Bounce_Callback();
+	//	Timer_Bounce_Callback();
 	}
 }
 
@@ -235,7 +237,7 @@ tmrTIMER_CALLBACK CallbackFunction, FunctionalState NewState)
 void xTimer_SetPeriod(xTimerHandle xTimer, uint32_t xTimerPeriodInTicks) 
 {
 	if ( xTimer != NULL )  
-	{	xTimerList[(uint32_t)xTimer-1].periodic = xTimerPeriodInTicks;	}
+	{	xTimerList[(uint32_t)xTimer-1].periodic = xTimerPeriodInTicks;	} //установка нового значения задержки таймера
 }
 
 //-------------------------------------------------------------------------------------------------------------//
@@ -243,8 +245,8 @@ void xTimer_Reload(xTimerHandle xTimer)
 {
 	if ( xTimer != NULL ) 
 	{
-		xTimerList[(uint32_t)xTimer-1].expiry = xTimeNow() + xTimerList[(uint32_t)xTimer-1].periodic;
-		xTimerList[(uint32_t)xTimer-1].State = __ACTIVE;
+		xTimerList[(uint32_t)xTimer-1].expiry = xTimeNow() + xTimerList[(uint32_t)xTimer-1].periodic; //установка уставки таймера
+		xTimerList[(uint32_t)xTimer-1].State = __ACTIVE; //запуск таймера
 	}
 }
 
@@ -285,10 +287,15 @@ void xTimer_Task(uint32_t portTick)
 }
 
 //---------------------------------------------------------------------------------------------------------//
-static void vTimerUARTmsgCallback(xTimerHandle xTimer)
+static void vTimerBounceSensorCallback(xTimerHandle xTimer)
 {
-	sprintf (DBG_buffer, "vTimerUARTmsgCallback\r\n");
-	DBG_PutString(DBG_buffer);
+	Timer_Bounce_Sensor_Callback();
+}
+
+//---------------------------------------------------------------------------------------------------------//
+static void vTimerBounceBtnCallback(xTimerHandle xTimer)
+{
+	Timer_Bounce_Btn_Callback();
 }
 
 //---------------------------------------------------------------------------------------------------------//
@@ -296,10 +303,28 @@ void timers_init (void)
 {
 	encoder_init(); 			//инициализация таймера энкодера
 	tim_delay_init(); 		//инициализация TIM16 для микросекундных задержек
-	timer_bounce_init();	//инициализация TIM17	для отчёта задержек дребезга кнопок 	
-
-	xTimerUARTmsg = xTimer_Create(5000, PERIODIC, &vTimerUARTmsgCallback, ENABLE); //перезагрузка и инициализация GPS-модуля через 5с 	
+//	timer_bounce_init();	//инициализация TIM17	для отчёта задержек дребезга кнопок 	
+	SysTick_Init(&xTimer_Task); //инициализия таймера SysTick указателем на ф-ю диспетчера xTimer_Task
+	xTimer_Init(&Get_SysTick); //инициализация указателя xTimer ф-ей получения системного времени SysTick
+	
+	xTimerBounceSensor = xTimer_Create(SENSOR_BOUNCE_DELAY, ONCE, &vTimerBounceSensorCallback, DISABLE); 
+	xTimerBounceBtn = xTimer_Create(BTN_BOUNCE_TIME, ONCE, &vTimerBounceBtnCallback, DISABLE);
 }
+
+//---------------------------------------------------------------------------------------------------------//
+void xTimersBounceSensor_Reload (uint16_t delay_ms)
+{
+	xTimer_SetPeriod(xTimerBounceSensor, delay_ms);
+	xTimer_Reload(xTimerBounceSensor);	
+}
+
+//---------------------------------------------------------------------------------------------------------//
+void xTimerBounceBtn_Reload (uint16_t delay_ms)
+{
+	xTimer_SetPeriod(xTimerBounceBtn, delay_ms);
+	xTimer_Reload(xTimerBounceBtn);	
+}
+
 
 //---------------------------------------------------------------------------------------------------------//
 /* USER CODE END 1 */

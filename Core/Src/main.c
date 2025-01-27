@@ -27,7 +27,6 @@
 /* USER CODE BEGIN Includes */
 #include "typedef.h"
 #include "drive.h"
-#include "systick.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -102,8 +101,7 @@ int main(void)
 	#ifdef __USE_IWDG
 		IWDG_Init();
 	#endif
-	SysTick_Init(&xTimer_Task); //инициализия таймера SysTick указателем на ф-ю диспетчера xTimer_Task
-	xTimer_Init(&Get_SysTick); //инициализация указателя xTimer ф-ей получения системного времени SysTick
+
 	timers_init ();	
 	init_status_sensor ();
 	drive_init ( &number_turns ) ;

@@ -25,9 +25,9 @@ void SysTick_Init(SysTick_CALLBACK CallbackFunction)
 // коллбэк прерывания таймера SysTick ----------------------------------------------------------------------//
 void SysTick_Callback(void)
 {
-    TicksCounter++; 
-		if ( SysTick_CallbackFunction != NULL ) //если указатель на коллбэк xTimer_Task проинициализирован
-			{SysTick_CallbackFunction(TicksCounter);} //вызов коллбэка
+	TicksCounter++; 
+	if ( SysTick_CallbackFunction != NULL ) //если указатель на коллбэк xTimer_Task проинициализирован
+	{SysTick_CallbackFunction(TicksCounter);} //вызов коллбэка
 }
 
 // возвращает значение SysTick--------------------------------------------------------------------------------//

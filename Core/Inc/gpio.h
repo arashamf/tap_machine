@@ -44,8 +44,8 @@ void Enable_Drive (uint8_t );
 void init_status_sensor (void);
 uint8_t status_sensor_machine (void);
 uint8_t scan_btn (void);
-void Sensor_Callback(void);
-void Timer_Bounce_Callback(void);
+void Timer_Bounce_Sensor_Callback(void);
+void Timer_Bounce_Btn_Callback(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

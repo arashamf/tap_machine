@@ -100,7 +100,7 @@ void Error_Handler(void);
 #endif
 /* USER CODE BEGIN Private defines */
 //#define __USE_IWDG
-#define __USE_DBG
+//#define __USE_DBG
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
